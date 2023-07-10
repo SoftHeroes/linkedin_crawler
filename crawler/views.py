@@ -5,17 +5,27 @@ from selenium import webdriver
 
 import json
 
+from linkedin_scraper.profileCollector import ProfileCollector
+
 def crawlers(request):
     driver = webdriver.Chrome()
 
     email = "shubhamjobanputra@gmail.com"
     password = "!0x7PW5!#L5%"
     actions.login(driver, email, password) # if email and password isnt given, it'll prompt in terminal
-    person = Person("https://www.linkedin.com/in/veena-siddaraju-68813b225", driver=driver,close_on_complete=True)
+    # person = Person("https://www.linkedin.com/in/veena-siddaraju-68813b225", driver=driver,close_on_complete=True)
     
-    data = person_to_json(person)
+    search_criteria = {
+        'keywords': 'BMC Remedy',
+        'geoUrn': ['100811329']
+    }
     
-    return JsonResponse(data, safe=False)
+    urls = ProfileCollector(search_criteria=search_criteria,driver=driver,max_page=100)
+    
+    # data = person_to_json(person)
+    # data = person_to_json(urls)
+    # return JsonResponse(data, safe=False)
+    return JsonResponse(urls.to_json(), safe=False)
 
 def person_to_json(person):
     """Converts a Person object to JSON.
