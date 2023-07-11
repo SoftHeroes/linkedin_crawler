@@ -65,7 +65,7 @@ class ProfileCollector(Scraper):
                 universal_image_div = entity_result.find_element(By.CSS_SELECTOR, '.entity-result__universal-image')
                 profile_element = universal_image_div.find_element(By.TAG_NAME, 'a')
                 profile_url = profile_element.get_attribute('href')
-                self.profile_urls.append(profile_url)
+                self.profile_urls.append({'profile_url':profile_url,"crawled":False})
 
             next_page_url = self.generate_next_page_url(current_page)
             if next_page_url is None:
