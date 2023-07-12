@@ -1,3 +1,4 @@
+import json
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -8,7 +9,7 @@ from .objects import Experience, Education, Scraper, Interest, Accomplishment, C
 import os
 from linkedin_scraper import selectors
 
-
+profile_detail_file = "jsons/profiles_scraped.json"
 class Person(Scraper):
 
     __TOP_CARD = "pv-top-card"
@@ -76,7 +77,7 @@ class Person(Scraper):
                     self.profile_errors.append(each_url)
                     pass
 
-                self.profile_details.append(person_to_json(self))
+                save_profiles_to_json([person_to_json(self)],profile_detail_file)
              
         else:
             if get:
@@ -453,3 +454,30 @@ def person_to_json(person):
     data["contacts"] = [contact.to_json() for contact in person.contacts]
 
     return data
+
+def save_profiles_to_json(profiles, file_path):
+    existing_profiles = []
+    
+    # Load existing profiles from JSON file
+    try:
+        with open(file_path, 'r') as file:
+            existing_profiles = json.load(file)
+    except FileNotFoundError:
+        pass
+    
+    # Check if profiles is a single dictionary or a list of dictionaries
+    if isinstance(profiles, dict):
+        profiles = [profiles]
+    
+    # Check if LinkedIn URL already exists in existing profiles
+    existing_urls = set(profile['linkedin_url'] for profile in existing_profiles)
+    
+    # Filter and append new profiles
+    new_profiles = [profile for profile in profiles if profile['linkedin_url'] not in existing_urls]
+    existing_profiles.extend(new_profiles)
+    
+    # Save profiles to JSON file
+    with open(file_path, 'w') as file:
+        json.dump(existing_profiles, file, indent=4)
+    
+    print(f"Saved {len(new_profiles)} profiles to {file_path}")
