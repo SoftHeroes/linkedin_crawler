@@ -22,6 +22,11 @@ password = "Test123!"
 
 profile_file = "jsons/profiles.json"
 
+search_criteria = {
+    'keywords': 'BMC Remedy',
+    'geoUrn': '["100811329"]'
+}
+
 def crawl_profiles(request):
     driver = webdriver.Chrome()
     
@@ -32,11 +37,6 @@ def crawl_profiles(request):
     #     'keywords': 'bmc remedy',
     #     'geoUrn': '["115918471","106187582","102106636","104869687","106442238"]'
     # }
-    
-    search_criteria = {
-        'keywords': 'BMC Remedy',
-        'geoUrn': '["100811329"]'
-    }
     
     urls = ProfileCollector(search_criteria=search_criteria,driver=driver,max_page=1)
     
@@ -59,8 +59,8 @@ def crawl_peoples(request):
     #     if not each_profile['crawled']:
     #         person = Person(each_profile['profile_url'], driver=driver,close_on_complete=True)
     #         persons.append(person_to_json(person))
-    
-    person_object = Person('',linkedin_urls=['https://www.linkedin.com/in/naresh-j-779b55122','https://www.linkedin.com/in/sumant-kumar-7b40404a','https://www.linkedin.com/in/mahesh-m-029370142'], driver=driver,close_on_complete=True)
+    urls = [profile["profile_url"] for profile in existing_data["profile_urls"]];
+    person_object = Person('',linkedin_urls=urls, driver=driver,close_on_complete=True)
     
     return JsonResponse(person_object.profile_details, safe=False)
     # return JsonResponse({'message':'people stored successfully!'}, safe=False)
