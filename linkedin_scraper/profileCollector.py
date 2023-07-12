@@ -56,7 +56,8 @@ class ProfileCollector(Scraper):
     def scrape(self):
         current_page = 1
         while current_page <= self.max_page:
-            search_url = self.generate_search_url(self.search_criteria, current_page).replace('%27', '"')
+            # search_url = self.generate_search_url(self.search_criteria, current_page).replace('%27', '"')
+            search_url = self.generate_search_url(self.search_criteria, current_page)
             self.driver.get(search_url)
             sleep(3)  # Wait for the page to load
 

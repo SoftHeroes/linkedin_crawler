@@ -31,8 +31,14 @@ class Person(Scraper):
         scrape=True,
         close_on_complete=True,
         time_to_wait_after_login=0,
+        linkedin_urls=[],
+        profile_details=[],
+        profile_errors=[],
     ):
         self.linkedin_url = linkedin_url
+        self.profile_details = profile_details
+        self.linkedin_urls = linkedin_urls
+        self.profile_errors = profile_errors
         self.name = name
         self.about = about or []
         self.experiences = experiences or []
@@ -55,13 +61,31 @@ class Person(Scraper):
             except:
                 driver = webdriver.Chrome()
 
-        if get:
-            driver.get(linkedin_url)
+        if not len(self.linkedin_urls) == 0:
+            for each_url in self.linkedin_urls:
+                try:
+                    self.linkedin_url = each_url
+                    if get:
+                        driver.get(each_url)
 
-        self.driver = driver
+                    self.driver = driver
 
-        if scrape:
-            self.scrape(close_on_complete)
+                    if scrape:
+                        self.scrape(False)
+                except Exception as e:
+                    self.profile_errors.append(each_url)
+                    pass
+
+                self.profile_details.append(person_to_json(self))
+             
+        else:
+            if get:
+                driver.get(linkedin_url)
+
+            self.driver = driver
+
+            if scrape:
+                self.scrape(close_on_complete)
 
     def add_about(self, about):
         self.about.append(about)
@@ -143,7 +167,12 @@ class Person(Scraper):
                     company = outer_positions[0].find_element(By.TAG_NAME,"span").text
                     work_times = outer_positions[1].find_element(By.TAG_NAME,"span").text
                     location = outer_positions[2].find_element(By.TAG_NAME,"span").text
-
+            elif len(outer_positions) == 2:
+                position_title = ""
+                company = outer_positions[0].find_element(By.TAG_NAME,"span").text
+                work_times = outer_positions[1].find_element(By.TAG_NAME,"span").text
+                location = ""
+            
             times = work_times.split("·")[0].strip() if work_times else ""
             duration = work_times.split("·")[1].strip() if len(work_times.split("·")) > 1 else None
 
@@ -167,6 +196,8 @@ class Person(Scraper):
                     from_date = " ".join(times.split(" ")[:2]) if times else ""
                     to_date = " ".join(times.split(" ")[3:]) if times else ""
 
+                    # sometimes it returns WebElement if .text not used
+                    description = description.text 
                     experience = Experience(
                         position_title=position_title,
                         from_date=from_date,
@@ -213,6 +244,13 @@ class Person(Scraper):
             position_summary_text = position_details_list[1] if len(position_details_list) > 1 else None
             outer_positions = position_summary_details.find_element(By.XPATH,"*").find_elements(By.XPATH,"*")
 
+            try:
+                institution_name = outer_positions[0].find_element(By.TAG_NAME,"span").find_element(By.TAG_NAME,"span").text
+                degree = outer_positions[1].find_element(By.TAG_NAME,"span").text
+            except IndexError:
+                institution_name = None
+                degree = None
+            
             institution_name = outer_positions[0].find_element(By.TAG_NAME,"span").text
             degree = outer_positions[1].find_element(By.TAG_NAME,"span").text
 
@@ -392,3 +430,26 @@ class Person(Scraper):
             acc=self.accomplishments,
             conn=self.contacts,
         )
+
+def person_to_json(person):
+    """Converts a Person object to JSON.
+
+    Args:
+    person: The Person object to convert.
+
+    Returns:
+    A JSON representation of the Person object.
+    """
+
+    data = {}
+    data["linkedin_url"] = person.linkedin_url
+    data["name"] = person.name
+    data["about"] = person.about
+    data["experiences"] = [experience.to_json() for experience in person.experiences]
+    data["educations"] = [education.to_json() for education in person.educations]
+    data["interests"] = [interest.to_json() for interest in person.interests]
+    data["accomplishments"] = [accomplishment.to_json() for accomplishment in person.accomplishments]
+    data["also_viewed_urls"] = person.also_viewed_urls
+    data["contacts"] = [contact.to_json() for contact in person.contacts]
+
+    return data
